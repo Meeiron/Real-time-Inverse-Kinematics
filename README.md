@@ -1,96 +1,179 @@
-# Real-time Inverse Kinematics Comparison using CCD and Enhanced FABRIK
+# Real-time Inverse Kinematics: CCD vs FABRIK
 
-## Course
-Computer Animation Term Project  
-Department of Computer Engineering, Chulalongkorn University
+This project presents a real-time comparison between two inverse kinematics (IK) algorithms: **Cyclic Coordinate Descent (CCD)** and **Forward And Backward Reaching Inverse Kinematics (FABRIK)** for 2D articulated arm animation.
 
-## Author
-Theerut Suwanrada
+The system is implemented in Python with an interactive visualization, allowing users to evaluate performance, convergence behavior, and motion quality in real time.
 
 ---
 
-## Project Title
-Real-time Inverse Kinematics Comparison using CCD and Enhanced FABRIK
+## 🔗 Repository
+
+GitHub: https://github.com/Meeiron/Real-time-Inverse-Kinematics
 
 ---
 
-## Problem
-This project studies the inverse kinematics (IK) problem for real-time interactive computer animation.
+## 📌 Project Overview
 
-Given a fixed base joint, multiple connected arm segments, and a target position, the objective is to compute the joint configuration such that the end-effector reaches the target as accurately and efficiently as possible.
+Inverse Kinematics (IK) is widely used in:
 
-The main focus is on comparing convergence speed, runtime performance, and positional accuracy between two IK methods.
+* Computer animation
+* Game development
+* Robotics simulation
 
----
+This project focuses on comparing:
 
-## Approach
-
-### Baseline
-**Cyclic Coordinate Descent (CCD)**
-
-CCD solves IK by iteratively rotating each joint from the end-effector toward the base until the target is reached.
-
-Main characteristics:
-- simple implementation
-- angle-based iterative solver
-- may require many iterations
-- slower for longer chains
+* Convergence speed
+* Runtime performance
+* Iteration count
+* Stability in edge cases (e.g., unreachable targets)
 
 ---
 
-### Proposed
-**Enhanced FABRIK (Forward And Backward Reaching Inverse Kinematics)**
+## ⚙️ Features
 
-The proposed method uses FABRIK with additional improvements:
-
-- **Early stopping**  
-  terminates iteration when error is below threshold
-
-- **Unreachable target clamping**  
-  directly stretches the chain toward unreachable targets
-
-These improvements reduce unnecessary iterations and improve real-time responsiveness.
+* Real-time interactive IK simulation
+* Mouse-controlled target position
+* Switch between CCD and FABRIK
+* Early stopping for faster convergence
+* Unreachable target clamping
+* Supports multiple chain lengths (e.g., 3, 5, 10 joints)
 
 ---
 
-## Results
+## 🧠 Methods
 
-### Speedup
-The proposed method achieves approximately:
+### CCD (Cyclic Coordinate Descent)
 
-- **2.9× speedup** for 3 joints
-- **3.1× speedup** for 5 joints
-- **3.1× speedup** for 10 joints
+* Iteratively rotates joints from end-effector to base
+* Simple and intuitive
+* Easier to apply joint constraints
 
----
+### FABRIK (Enhanced)
 
-### Stability Improvement
-The proposed method reduces average positional error from:
+* Position-based approach (no angle rotation)
+* Forward & backward passes
+* Faster convergence
+* More stable for real-time applications
 
-- CCD: **3.8 px**
-- Proposed: **1.2 px**
+Enhancements:
 
-This corresponds to approximately:
-
-- **68% error reduction**
-
----
-
-## Visualization / Demo
-The project includes a real-time interactive 2D demo.
-
-Features:
-- articulated arm follows mouse cursor
-- switch between CCD and FABRIK
-- display runtime, iterations, and error
-- real-time visual comparison
-
-Press **SPACE** to switch methods.
+* Early stopping (threshold-based)
+* Unreachable target clamping
 
 ---
 
-## How to Run
+## 📂 Project Structure
 
-### Install dependencies
+```bash
+Real-time-Inverse-Kinematics/
+│
+├── src/                # Source code (main simulation logic)
+│   ├── main.py
+│   ├── ccd.py
+│   ├── fabrik.py
+│   └── utils.py
+│
+├── assets/             # (Optional) images / demo resources
+│
+├── results/            # Experiment results / screenshots
+│
+├── report/             # Final report (IEEE format)
+│   └── IK_Report.pdf
+│
+├── slides/             # Presentation slides
+│   └── IK_Presentation.pdf
+│
+└── README.md
+```
+
+---
+
+## 📄 Included Files (Submission Materials)
+
+This repository includes all materials submitted for the course project:
+
+* 📘 **Final Report** (IEEE format)
+* 📊 **Presentation Slides (PDF)**
+* 🎥 **Demo (if included in repo or external link)**
+* 💻 **Full Source Code (Python + Pygame)**
+
+---
+
+## ▶️ How to Run
+
+### 1. Install dependencies
+
 ```bash
 pip install pygame numpy
+```
+
+### 2. Run the simulation
+
+```bash
+python src/main.py
+```
+
+### 3. Controls
+
+* Move mouse → control target
+* (Optional) Key press → switch IK method
+
+---
+
+## 📊 Results Summary
+
+| Metric             | CCD         | FABRIK       |
+| ------------------ | ----------- | ------------ |
+| Iterations         | Higher      | Lower        |
+| Runtime            | Slower      | Faster (~3×) |
+| Stability          | Medium      | High         |
+| Unreachable Target | Inefficient | Efficient    |
+
+---
+
+## ⚠️ Limitations
+
+* Limited to 2D articulated chains
+* No joint angle constraints
+* No temporal smoothing
+* FABRIK may produce ambiguous poses in some cases
+
+---
+
+## 🔄 When CCD Can Be Better
+
+* Easier to enforce joint constraints
+* More predictable behavior
+* Better control over joint rotations
+* Suitable for short kinematic chains
+
+---
+
+## 🚀 Future Work
+
+* Extend to 3D IK systems
+* Add joint constraints
+* Integrate with Unreal Engine (Control Rig)
+* Physics-based animation
+* Motion smoothing
+
+---
+
+## 📚 Conclusion
+
+FABRIK provides:
+
+* Faster convergence
+* Fewer iterations
+* Better real-time performance
+
+However, CCD remains useful in constraint-driven systems.
+
+👉 There is **no universally best method** — the choice depends on application requirements.
+
+---
+
+## 👤 Author
+
+**Theerut Suwanrada**
+Computer Animation Term Project
