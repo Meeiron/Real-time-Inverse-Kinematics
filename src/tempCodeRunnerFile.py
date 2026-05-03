@@ -18,13 +18,10 @@ pygame.display.set_caption("IK Comparison: CCD vs FABRIK")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 28)
 
-# initial joints
-lengths = [100, 80, 60]
+# แขน 4 ข้อ
+#lengths = [100, 100, 80, 60]
+# lengths = [100, 100, 80, 60, 90, 80, 90, 70, 100, 30]
 base_pos = np.array([WIDTH // 2, HEIGHT // 2], dtype=float)
-
-# warm start states
-prev_ccd_angles = None
-prev_fabrik_joints = None
 
 
 def distance(a, b):
@@ -44,12 +41,8 @@ def forward_kinematics(base, angles, lengths):
     return joints
 
 
-# ---------------- CCD ----------------
-def ccd_ik(base, lengths, target, initial_angles=None, max_iter=30, threshold=5):
-    if initial_angles is not None and len(initial_angles) == len(lengths):
-        angles = initial_angles.copy()
-    else:
-        angles = [0.0] * len(lengths)
+def ccd_ik(base, lengths, target, max_iter=30, threshold=5):
+    angles = [0.0] * len(lengths)
 
     start = time.perf_counter()
 
@@ -77,41 +70,28 @@ def ccd_ik(base, lengths, target, initial_angles=None, max_iter=30, threshold=5)
     joints = forward_kinematics(base, angles, lengths)
     error = distance(joints[-1], target)
 
-    return joints, runtime, iteration + 1, error, angles
+    return joints, runtime, iteration + 1, error
 
 
-# ---------------- FABRIK ----------------
-def fabrik_ik(base, lengths, target, initial_points=None,
-              max_iter=30, threshold=5):
+def fabrik_ik(base, lengths, target, max_iter=30, threshold=5):
+    points = [base.copy()]
 
-    epsilon = 1e-6
-
-    # warm start
-    if initial_points is not None and len(initial_points) == len(lengths) + 1:
-        points = [p.copy() for p in initial_points]
-        points[0] = base.copy()
-    else:
-        points = [base.copy()]
-        for l in lengths:
-            points.append(points[-1] + np.array([l, 0], dtype=float))
+    for l in lengths:
+        points.append(points[-1] + np.array([l, 0], dtype=float))
 
     total_length = sum(lengths)
 
     start = time.perf_counter()
+
     iterations_used = 0
 
-    # unreachable
     if distance(base, target) > total_length:
-        direction = (target - base)
-        d = np.linalg.norm(direction)
-        if d < epsilon:
-            d = epsilon
-        direction = direction / d
+        direction = (target - base) / distance(base, target)
 
         for i in range(1, len(points)):
             points[i] = points[i - 1] + direction * lengths[i - 1]
 
-        iterations_used = 1
+        iterations_used = 1 
 
     else:
         original_base = base.copy()
@@ -122,9 +102,6 @@ def fabrik_ik(base, lengths, target, initial_points=None,
 
             for i in reversed(range(len(points) - 1)):
                 r = distance(points[i + 1], points[i])
-                if r < epsilon:
-                    r = epsilon
-
                 lam = lengths[i] / r
                 points[i] = (1 - lam) * points[i + 1] + lam * points[i]
 
@@ -133,13 +110,10 @@ def fabrik_ik(base, lengths, target, initial_points=None,
 
             for i in range(len(points) - 1):
                 r = distance(points[i + 1], points[i])
-                if r < epsilon:
-                    r = epsilon
-
                 lam = lengths[i] / r
                 points[i + 1] = (1 - lam) * points[i] + lam * points[i + 1]
 
-            iterations_used = iteration + 1
+            iterations_used = iteration + 1   # <-- เพิ่มบรรทัดนี้
 
             if distance(points[-1], target) < threshold:
                 break
@@ -150,33 +124,20 @@ def fabrik_ik(base, lengths, target, initial_points=None,
     return points, runtime, iterations_used, error
 
 
-# ---------------- UI helpers ----------------
-def add_joint():
-    global prev_fabrik_joints, prev_ccd_angles
-    lengths.append(40)
-    prev_fabrik_joints = None
-    prev_ccd_angles = None
-
-
-def remove_joint():
-    global prev_fabrik_joints, prev_ccd_angles
-    if len(lengths) > 1:
-        lengths.pop()
-        prev_fabrik_joints = None
-        prev_ccd_angles = None
-
-
 def draw_arm(joints, color):
     for i in range(len(joints) - 1):
-        pygame.draw.line(screen, color,
-                         joints[i].astype(int),
-                         joints[i + 1].astype(int), 5)
+        pygame.draw.line(
+            screen,
+            color,
+            joints[i].astype(int),
+            joints[i + 1].astype(int),
+            5
+        )
         pygame.draw.circle(screen, BLACK, joints[i].astype(int), 8)
 
     pygame.draw.circle(screen, BLACK, joints[-1].astype(int), 8)
 
 
-# ---------------- Main Loop ----------------
 running = True
 use_fabrik = False
 
@@ -193,44 +154,27 @@ while running:
             if event.key == pygame.K_SPACE:
                 use_fabrik = not use_fabrik
 
-            elif event.key in (pygame.K_EQUALS, pygame.K_PLUS):
-                add_joint()
-
-            elif event.key == pygame.K_MINUS:
-                remove_joint()
-
-            elif event.key == pygame.K_r:
-                prev_fabrik_joints = None
-                prev_ccd_angles = None
-
     screen.fill(WHITE)
 
     if use_fabrik:
-        joints, runtime, iters, error = fabrik_ik(
-            base_pos, lengths, target, prev_fabrik_joints
-        )
-        prev_fabrik_joints = joints
+        joints, runtime, iters, error = fabrik_ik(base_pos, lengths, target)
         method = "FABRIK (Proposed)"
         color = GREEN
-
     else:
-        joints, runtime, iters, error, prev_ccd_angles = ccd_ik(
-            base_pos, lengths, target, prev_ccd_angles
-        )
+        joints, runtime, iters, error = ccd_ik(base_pos, lengths, target)
         method = "CCD (Baseline)"
         color = BLUE
 
     draw_arm(joints, color)
+
     pygame.draw.circle(screen, RED, target.astype(int), 10)
 
     texts = [
         f"Method: {method}",
-        f"Joints: {len(lengths)}",
         f"Runtime: {runtime:.4f} ms",
         f"Iterations: {iters}",
         f"Error: {error:.2f}",
-        "SPACE: switch method",
-        "+/- : add/remove joint",
+        "Press SPACE to switch method"
     ]
 
     for i, txt in enumerate(texts):
